@@ -39,7 +39,23 @@ namespace infini
         // TODO：返回经过 clip 操作后的 shape
         // REF: https://onnx.ai/onnx/operators/onnx__Clip.html#clip-13
         // =================================== 作业 ===================================
-        return std::nullopt;
+        
+        // `clip` is used for bond the element within max and min
+        // so the shape is not augmented
+
+        // 这个写法能通过test，但是做后面test的时候发现不太对
+        // 因为这里语法是和onnx对齐的，clip接受的是 
+        // [实际tensor, min tensor, max tensor]
+        // 所以这样返回的是 [tensor dim, argument_min dim, argument_max dim]
+        // 后两个肯定没用
+        // 这里名字叫unary，所以显然是接受一个tensor的
+        // vector<Shape> retDims;
+        // for (auto tensor : inputs){
+        //     retDims.push_back(tensor->getDims());
+        // }
+        // return retDims;
+
+        return vector<Shape>{inputs[0]->getDims()};
     }
 
     std::string ClipObj::toString() const
@@ -66,7 +82,33 @@ namespace infini
         // REF_FILE: src/core/operator.cc
         // REF: https://onnx.ai/onnx/operators/onnx__Cast.html#cast-21
         // =================================== 作业 ===================================
-        return {};
+
+        // 找不到ONNX的实现
+        // 文档上说input 只有一个tensor
+        // 另外有两个 attributes
+        // 但是C++没有attributes
+        // 只能通过test 来猜测inputs
+        // auto op = g->addOp<CastObj>(i0, nullptr, CastType::Float2Float16);
+        // CastObj(GraphObj *graph, Tensor input, Tensor output, CastType type);
+        // CastObj::CastObj(GraphObj *graph, Tensor input, Tensor output, CastType type)
+        // CastObj::CastObj(GraphObj *graph, Tensor input, Tensor output, CastType type)
+        //     : OperatorObj(OpType::Cast, {input}, {output}), castType(type)
+        // {
+        //     IT_ASSERT(checkValid(graph));
+        // }
+        // 所以返回 private 成员 castType 就行
+
+        // 应该是一堆tensor，type一样，所以用第一个代替？
+        // 不是，CastObj 定义就一个
+        // int numInputs() const override { return 1; }
+        // int numOutputs() const override { return 1; }
+
+        // castType 和 DataType 枚举类型不同！！！
+        // return { DataType(static_cast<int>(castType)) };
+
+        // castType 是 x to y 的形式，所以有专用函数吗
+        // 有，下面的DataType CastObj::getOutputDataType() const
+        return { getOutputDataType() };
     }
 
     optional<vector<Shape>> CastObj::inferShape(const TensorVec &inputs)
@@ -75,7 +117,9 @@ namespace infini
         // TODO：返回经过 cast 操作后的 shape
         // REF: https://onnx.ai/onnx/operators/onnx__Cast.html#cast-21
         // =================================== 作业 ===================================
-        return std::nullopt;
+        // numOutputs 是 tensor 数量，不是每个tensor内的shape
+        // return vector<Shape>{Shape(numOutputs())};
+        return vector<Shape>{ inputs[0]->getDims() };
     }
 
     std::string CastObj::toString() const

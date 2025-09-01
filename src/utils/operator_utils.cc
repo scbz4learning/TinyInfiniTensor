@@ -4,13 +4,22 @@
 namespace infini {
 
 Shape infer_broadcast(const Shape &A, const Shape &B) {
-
     // =================================== 作业 ===================================
     // TODO：对 A 和 B 进行双向广播，返回广播后的形状。
     // REF: https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md
     // =================================== 作业 ===================================
+
+    Shape retShape(std::max(A.size(), B.size()));
+
+    for (size_t i = 0; i < retShape.size(); i++) {
+        size_t dimA = i < A.size() ? A[A.size() - 1 - i] : 1;
+        size_t dimB = i < B.size() ? B[B.size() - 1 - i] : 1;
+        IT_ASSERT(dimA == dimB || dimA == 1 || dimB == 1) 
+                << "mismatch dim in broadcasting";
+        retShape[retShape.size() - 1 - i] = dimA != 1 ? dimA : dimB; 
+    }
     
-    return {};
+    return retShape;
 }
 
 int get_real_axis(const int &axis, const int &rank) {

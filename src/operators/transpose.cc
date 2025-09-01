@@ -34,7 +34,20 @@ namespace infini
         // REF: https://onnx.ai/onnx/operators/onnx__Transpose.html#transpose-21
         // =================================== 作业 ===================================
 
-        return std::nullopt;
+        // 来不及看 onnx 了
+        // TransposeObj 有一个 std::vector<int> getPermute() const { return transposePermute; }
+        // 所以直接修改这个就行。
+        // 课上有说过，可以先存列有限矩阵，等到实际需要或者图优化的时候，在根据需要决定是否反转
+
+
+        // perm_ 实际上就是维度标识
+        // 比如shape 是 【2，3，4】
+        // perm 是 【1，0，2】
+        // 那就表示 第0维实际是第1维，以此类推
+        for (auto i = 0; i < rank; ++i)
+                output_dim[i] = input_dim[transposePermute[i]];
+
+        return vector<Shape>{output_dim};
     }
 
     std::string TransposeObj::toString() const
